@@ -1,11 +1,13 @@
 # PART 1
 
 #getting the profile urls using playwright 
-#since the start url is dynamically loaded
+#since the start url is dynamically loaded(javascript rendered)
+
 
 import nest_asyncio
 import asyncio
 from playwright.async_api import async_playwright
+
 
 # Apply the nest_asyncio patch to allow nested event loops
 nest_asyncio.apply()
@@ -59,7 +61,7 @@ async def fetch_links():
         await browser.close()
     return profile_links
 
-# Function to run the async function in a Jupyter Notebook or similar environment
+# Function to run the async function 
 def get_links():
     try:
         loop = asyncio.get_event_loop()
@@ -70,9 +72,6 @@ def get_links():
 
 # Fetch the profile links
 profile_links = get_links()
-
-#Print the profile links
-#print(profile_links)
 
 
 # PART 2
@@ -110,8 +109,10 @@ class AgentsSpider(scrapy.Spider):
         website = response.xpath('//div[@class="site-global-container"]//li[@class="rng-agent-profile-contact-website"]/a/@href').get()
         email = response.xpath('//div[@class="site-global-container"]//li[@class="rng-agent-profile-contact-email"]/a/@href').get()
         description = response.xpath('//div[@class="site-global-container"]//article[@class="rng-agent-profile-content"]//text()').getall()
-        #response.xpath('//div[@class="site-global-container"]//article[@class="rng-agent-profile-content"]//p//text()').getall()    
+          
+        # creating a new variable to yield from webpage data
 
+        offices = address2.split(',')[0] + ' Office'
 
 
         # cleaning the data
@@ -128,6 +129,12 @@ class AgentsSpider(scrapy.Spider):
             languages = ['English']  #assuming 'English' as default language since all these agents live in a country with native language as English
 
         
+        
+        #removing a row with incompleted address
+
+        if not address1:
+            return
+
 
         facebook = facebook if facebook else 'N/A'
         twitter = twitter if twitter else 'N/A'
@@ -157,9 +164,11 @@ class AgentsSpider(scrapy.Spider):
         
         #creating a dict to hold all contact details
 
+        base_url = 'https://www.bhhsamb.com'
+
         contact_details = {
             'cell': phone,
-            'email': email, 
+            'email': base_url + email, #since url not complete 
             'website': website
         }
 
@@ -183,12 +192,6 @@ class AgentsSpider(scrapy.Spider):
         # Clean the description
         cleaned_description = clean_description(description)
 
-                
-        # creating a new variable to yield from webpage data
-
-        offices = address2.split(',')[0] + ' Office'
-
-    
         
         yield {
             'name': name,
