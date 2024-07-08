@@ -13,7 +13,7 @@ async def fetch_links():
     profile_links = []
 
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)  # Run in headless mode
+        browser = await p.chromium.launch(headless=True)  
         page = await browser.new_page()
 
         await page.goto(url)
