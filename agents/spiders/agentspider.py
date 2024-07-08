@@ -91,24 +91,13 @@ class AgentsSpider(scrapy.Spider):
             yield response.follow(link, callback=self.parse_agents)
 
     def parse_agents(self, response):
-        name = response.xpath('//div[@class="site-global-container"]//p[@class="rng-agent-profile-contact-name"]/text()').get()
-        if name:
-            name = name.strip()
-
+        name = response.xpath('//div[@class="site-global-container"]//p[@class="rng-agent-profile-contact-name"]/text()').get().strip()
         job_title = response.xpath('//div[@class="site-global-container"]//p[@class="rng-agent-profile-contact-name"]/span/text()').get()
-        if not job_title:
-            job_title = 'Realtor'
-            
         image_url = response.xpath('//div[@class="site-global-container"]//article[@class="rng-agent-profile-main"]/img/@src').get()
-        if not image_url:
-            image_url = 'No Image'
-
         address1 = response.xpath('//div[@class="site-global-container"]//li[@class="rng-agent-profile-contact-address"]//strong/text()[1]').get().strip()
         address2 = response.xpath('//div[@class="site-global-container"]//li[@class="rng-agent-profile-contact-address"]//strong/following::text()').get().strip()
-
         languages = response.xpath('//div[@class="site-global-container"]//p[@class="rng-agent-profile-languages"]/text()').getall()
-        
-        phone = response.xpath('//div[@class="site-global-container"]//li[@class="rng-agent-profile-contact-phone"]/a/@href').get()
+        phone = response.xpath('//div[@class="site-global-container"]//li[@class="rng-agent-profile-contact-phone"]/a/@href').get().replace('tel:', '')
         facebook = response.xpath('//div[@class="site-global-container"]//li[@class="social-facebook"]/a/@href').get()
         twitter = response.xpath('//div[@class="site-global-container"]//li[@class="social-twitter"]/a/@href').get()
         linkedin = response.xpath('//div[@class="site-global-container"]//li[@class="social-linkedin"]/a/@href').get()
@@ -120,7 +109,27 @@ class AgentsSpider(scrapy.Spider):
         description = response.xpath('//div[@class="site-global-container"]//article[@class="rng-agent-profile-content"]//text()').getall()
         #response.xpath('//div[@class="site-global-container"]//article[@class="rng-agent-profile-content"]//p//text()').getall()    
 
+        #cleaning the data
 
+        # handling null values with imputation
+
+        if not job_title:
+            job_title = 'Realtor'  #since more than 95% of agents have their job title as 'Realtor' 
+
+        if not image_url:
+            image_url = 'No Image'  #since its unique to each we cant impute 
+
+        if not languages:
+            languages = ['English']  #assuming 'English' as default language since all these agents live in a country with native language as English
+
+        na = [phone, facebook, twitter, linkedin, youtube, pinterest, instagram]
+
+        for i in na:
+            if not i:
+                i = 'N/A'   #since urls are unique choosing to impute with place holder 'N/A'
+
+
+        # making a dict to hold all social accounts
 
         social_accounts = {
             'facebook': facebook,
@@ -131,18 +140,23 @@ class AgentsSpider(scrapy.Spider):
             'instagram': instagram
         }
 
+        #creating format for address
+
         address = f"{address1}, {address2}"
 
-        if phone:
-            phone = phone.replace('tel:', '')
+        
+        #creating a dict to hold all contact details
 
-         
-        
         contact_details = {
-            'cell': phone,
-            # 'email': email,
+            'tel': phone,
+            'email': email, 
+            'website': website
         }
+
         
+        # deleting 'About' and 'More information about me' which is there in description for even agents who havent entered description.
+        #to make a distinction agents who actually have valid description and those who dont.
+
         def clean_description(description):
             # Regex pattern to match 'About' followed by 0 to 2 words
             about_pattern = re.compile(r'\bAbout\b(\s+\w+){0,2}')
@@ -160,6 +174,7 @@ class AgentsSpider(scrapy.Spider):
         cleaned_description = clean_description(description)
 
                 
+        # creating a new variable to yield from webpage data
 
         offices = address2.split(',')[0] + ' Office'
 
