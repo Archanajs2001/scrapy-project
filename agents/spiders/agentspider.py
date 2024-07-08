@@ -1,4 +1,7 @@
-#get the profile urls using playwright 
+# PART 1
+
+#getting the profile urls using playwright 
+#since the start url is dynamically loaded
 
 import nest_asyncio
 import asyncio
@@ -45,8 +48,7 @@ async def fetch_links():
         # Extract all links that start with '/bio/'
         bio_links = await page.query_selector_all("a[href^='/bio/']")
 
-        #print(f"Total number of links found: {len(bio_links)}")
-
+        
         # Collect the href attribute of each link and prepend the base URL
         for link in bio_links:
             href = await link.get_attribute('href')
@@ -70,11 +72,12 @@ def get_links():
 profile_links = get_links()
 
 #Print the profile links
-print(profile_links)
+#print(profile_links)
 
 
+# PART 2
 
-#spider
+#Crawling through each of profile link to get the required details
 
 import scrapy
 import re
@@ -85,7 +88,7 @@ class AgentsSpider(scrapy.Spider):
     start_urls = ['https://www.bhhsamb.com/roster/Agents']
 
     def parse(self, response):
-        # Use the links obtained from Playwright
+        # Using the links obtained from Playwright
         global profile_links
         for link in profile_links:
             yield response.follow(link, callback=self.parse_agents)
@@ -97,7 +100,7 @@ class AgentsSpider(scrapy.Spider):
         address1 = response.xpath('//div[@class="site-global-container"]//li[@class="rng-agent-profile-contact-address"]//strong/text()[1]').get().strip()
         address2 = response.xpath('//div[@class="site-global-container"]//li[@class="rng-agent-profile-contact-address"]//strong/following::text()').get().strip()
         languages = response.xpath('//div[@class="site-global-container"]//p[@class="rng-agent-profile-languages"]/text()').getall()
-        phone = response.xpath('//div[@class="site-global-container"]//li[@class="rng-agent-profile-contact-phone"]/a/@href').get().replace('tel:', '')
+        phone = response.xpath('//div[@class="site-global-container"]//li[@class="rng-agent-profile-contact-phone"]/a/@href').get()
         facebook = response.xpath('//div[@class="site-global-container"]//li[@class="social-facebook"]/a/@href').get()
         twitter = response.xpath('//div[@class="site-global-container"]//li[@class="social-twitter"]/a/@href').get()
         linkedin = response.xpath('//div[@class="site-global-container"]//li[@class="social-linkedin"]/a/@href').get()
@@ -109,7 +112,9 @@ class AgentsSpider(scrapy.Spider):
         description = response.xpath('//div[@class="site-global-container"]//article[@class="rng-agent-profile-content"]//text()').getall()
         #response.xpath('//div[@class="site-global-container"]//article[@class="rng-agent-profile-content"]//p//text()').getall()    
 
-        #cleaning the data
+
+
+        # cleaning the data
 
         # handling null values with imputation
 
@@ -122,11 +127,16 @@ class AgentsSpider(scrapy.Spider):
         if not languages:
             languages = ['English']  #assuming 'English' as default language since all these agents live in a country with native language as English
 
-        na = [phone, facebook, twitter, linkedin, youtube, pinterest, instagram]
+        
 
-        for i in na:
-            if not i:
-                i = 'N/A'   #since urls are unique choosing to impute with place holder 'N/A'
+        facebook = facebook if facebook else 'N/A'
+        twitter = twitter if twitter else 'N/A'
+        instagram = instagram if instagram else 'N/A'
+        youtube = youtube if youtube else 'N/A'      #since urls are unique choosing to impute with place holder 'N/A'
+        linkedin = linkedin if linkedin else 'N/A'
+        pinterest = pinterest if pinterest else 'N/A'  
+        phone = phone.replace('tel:', '') if phone else 'N/A' 
+
 
 
         # making a dict to hold all social accounts
@@ -148,7 +158,7 @@ class AgentsSpider(scrapy.Spider):
         #creating a dict to hold all contact details
 
         contact_details = {
-            'tel': phone,
+            'cell': phone,
             'email': email, 
             'website': website
         }
