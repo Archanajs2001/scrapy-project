@@ -112,7 +112,7 @@ class AgentsSpider(scrapy.Spider):
           
         # creating a new variable to yield from webpage data
 
-        offices = address2.split(',')[0] + ' Office'
+        offices = [address2.split(',')[0] + ' Office']
 
 
         # cleaning the data
@@ -173,8 +173,8 @@ class AgentsSpider(scrapy.Spider):
         }
 
         
-        # deleting 'About' and 'More information about me' which is there in description for even agents who havent entered description.
-        #to make a distinction agents who actually have valid description and those who dont.
+        # deleting 'About' and 'More information about me' which is there in description as default for all agents regardless of who entered description.
+        #to make a distinction for agents who actually have valid description and those who dont.
 
         def clean_description(description):
             # Regex pattern to match 'About' followed by 0 to 2 words
