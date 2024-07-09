@@ -6,7 +6,7 @@
 - [Methodology](#methodology)
 - [Data Cleaning](#data-cleaning)
 - [Implementation](#implementation)
-- [Challenes and Solutions](#challenges-and-solutions)
+- [Challenges and Solutions](#challenges-and-solutions)
 - [Result](#result)
 - [Conclusion](#coclusion)
 - [Referances](#referances)
